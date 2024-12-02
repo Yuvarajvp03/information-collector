@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Assignments</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container mt-5">
+  <h1 class="text-center mb-4">Submitted Assignments</h1>
+
+  <!-- Form for Total Students -->
+  <form action="/calculate-submissions" method="post" class="mb-4">
+    <div class="input-group">
+      <input type="number" name="totalStudents" class="form-control" placeholder="Enter Total Number of Students" required>
+      <button type="submit" class="btn btn-primary">Calculate Submissions</button>
+    </div>
+  </form>
+
+  <!-- Display Submission Statistics -->
+  <div class="alert alert-info" th:if="${totalStudents != null}">
+    <strong>Submission Statistics:</strong><br>
+    Total Students: <span th:text="${totalStudents}"></span><br>
+    Submitted Assignments: <span th:text="${submittedCount}"></span><br>
+    Not Submitted Assignments: <span th:text="${notSubmittedCount}"></span>
+  </div>
+
+  <!-- Canvas for Chart -->
+  <div style="position: relative; height:400px; width:800px;">
+    <canvas id="submissionChart"></canvas>
+  </div>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('submissionChart').getContext('2d');
+
+        // Dynamic data from Thymeleaf
+        const submittedCount = [[${submittedCount}]];
+        const notSubmittedCount = [[${notSubmittedCount}]];
+
+        // Calculate the maximum number for scaling
+        const maxStudents = submittedCount + notSubmittedCount;
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Submitted', 'Not Submitted'],
+                datasets: [{
+                    label: 'Number of Submissions',
+<!--                    label: 'Number of Non-Submission',-->
+
+                    data: [submittedCount, notSubmittedCount],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 99, 132, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: maxStudents, // Dynamically set the maximum value based on total students
+                        ticks: {
+                            stepSize: Math.ceil(maxStudents / 10), // Adjust the interval dynamically
+                            callback: function (value) {
+                                return value; // Customize label formatting if needed
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Students'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Submission Status'
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    });
+  </script>
+
+
+  <!-- Ensure this path is correct based on your project structure -->
+
+  <table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Student Name</th>
+      <th>Student ID</th>
+      <th>Course Name</th>
+      <th>Assignment File</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="assignment : ${assignments}">
+      <td th:text="${assignment.id}"></td>
+      <td th:text="${assignment.studentName}"></td>
+      <td th:text="${assignment.studentId}"></td>
+      <td th:text="${assignment.courseName}"></td>
+      <td>
+        <a th:href="@{/view-pdf/{fileName}(fileName=${assignment.assignmentFileName})}"
+           target="_blank" class="btn btn-sm btn-primary">View PDF</a>
+      </td>
+      <td>
+        <form action="/delete-assignment" method="post" style="display:inline;">
+          <input type="hidden" name="id" th:value="${assignment.id}">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');">
+            Delete
+          </button>
+        </form>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <a href="/" class="btn btn-primary">Back to Dashboard</a>
+</div>
+
+<footer class="mt-5 bg-dark text-white text-center py-3">
+  <p>&copy; 2024 Educational Dashboard. All Rights Reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
